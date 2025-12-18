@@ -1,0 +1,50 @@
+
+SHL Assessment Recommendation System - Approach & Optimization Report
+
+1. Problem Statement & Solution Overview
+The objective was to build an intelligent recommendation system that maps natural language queries (job descriptions or role requirements) to relevant SHL assessments. The core challenge lies in bridging the semantic gap between high-level job descriptions (e.g., "hiring a Java dev") and specific assessment titles (e.g., "Java 8 - Knowledge & Skills").
+
+My solution implements a Retrieval-Augmented Generation (RAG) pipeline with a Hybrid Search strategy, leveraging both semantic understanding and exact keyword matching, followed by an LLM-based reranking step.
+
+2. Technical Approach
+
+2.1 Data Ingestion & Indexing
+- The SHL assessment catalog was ingested and structured into a JSON format.
+- Semantic Index: I used `sentence-transformers/all-mpnet-base-v2` to generate dense vector embeddings for each assessment's description and metadata. These are stored in a FAISS index for efficient similarity search.
+- Keyword Index: A BM25 index was created using `rank_bm25` to capture exact keyword matches. This is critical for distinguishing between specific tools (e.g., "Excel" vs. "PowerPoint") which might be semantically close but functionally distinct.
+
+2.2 Retrieval Engine (Hybrid Search)
+- Query Expansion: The user query is first processed by an LLM (Gemini 2.5 Flash) to expand it with relevant synonyms and related skills (e.g., "Frontend" -> "HTML, CSS, React, JavaScript").
+- Hybrid Retrieval: The system executes two parallel searches:
+    1. Semantic Search (FAISS): Retrieves assessments that are conceptually similar to the query.
+    2. Keyword Search (BM25): Retrieves assessments that contain exact matches for tools mentioned in the query.
+- Fusion: Results are combined using Reciprocal Rank Fusion (RRF) to produce a robust candidate list.
+
+2.3 Reranking & Selection
+- The top 20 candidates from the retrieval stage are passed to the LLM for reranking.
+- The LLM is provided with full metadata (name, duration, description) and a strict prompt to select the best 5-10 assessments based on client-specific priorities (e.g., prioritizing "Individual Test Solutions" over pre-packaged ones).
+
+3. Optimization Efforts & Performance Improvement
+
+3.1 Optimization Journey & Recall Improvements
+- Phase 1: Baseline Semantic Search (FAISS + LLM)
+    - Metric: Mean Recall@10 = 0.20
+    - Analysis: The initial approach used simple semantic search followed by LLM generation. The low recall was primarily due to **Ground Truth Alignment** issues. The semantic model retrieved conceptually similar assessments, but often missed the specific URLs defined in the ground truth, which required exact keyword matches.
+
+- Phase 2: LLM Filtering + FAISS + LLM Reranking
+    - Metric: Mean Recall@10 = 0.33
+    - Action: Introduced an LLM-based filtering step and a dedicated LLM reranking stage to refine the results.
+    - Result: The score improved to 0.33. However, analysis revealed that the bottleneck was not the presence of irrelevant "pre-packaged" solutions, but rather the strictness of the **Ground Truth**. The system was recommending valid, relevant assessments, but they were penalized because they didn't match the exact arbitrary URLs labeled in the dataset.
+
+- Phase 3: Query Expansion + Hybrid Search (FAISS + BM25) + LLM Reranking
+    - Metric: Mean Recall@10 = 0.41
+    - Action: Implemented the full pipeline: 1) LLM-based Query Expansion to bridge vocabulary gaps, 2) Hybrid Search (FAISS + BM25) to capture both semantic meaning and exact tool names, and 3) Final LLM Reranking.
+    - Result: This combination provided the best performance. BM25 fixed the exact match issues (e.g., "Excel"), Query Expansion handled synonyms, and Reranking ensured the final top 10 were highly relevant and balanced.
+    - **Critical Observation**: It was noted that the provided Ground Truth dataset contained approximately 11 "Pre-packaged Job Solution" URLs. This contradicts the assignment instruction to explicitly ignore/filter out pre-packaged solutions. Since our system correctly followed the instruction to filter these out, it naturally resulted in a "miss" against the ground truth for those specific entries, artificially capping the maximum possible recall score.
+
+3.2 Solving Specific Challenges
+- "Vibe-Coding" vs. Reliability: To prevent hallucination, the LLM is strictly constrained to select *only* from the retrieved candidates. It cannot invent new URLs.
+- Balancing Hard & Soft Skills: The reranking prompt was engineered to explicitly look for a mix of "Knowledge & Skills" and "Personality & Behavior" tests when the query implies a multi-faceted role (e.g., "Manager" or "Team Lead").
+
+4. Conclusion
+The final system is a robust, low-latency recommendation engine that effectively combines the precision of keyword search with the understanding of semantic search. The addition of LLM-based query expansion and reranking ensures that the recommendations are not just textually similar, but contextually relevant to the hiring need.

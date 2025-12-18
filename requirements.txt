@@ -1,0 +1,12 @@
+sentence-transformers
+faiss-cpu
+numpy
+langchain
+langchain-google-genai
+python-dotenv
+fastapi
+uvicorn
+requests
+beautifulsoup4
+pandas
+openpyxl
