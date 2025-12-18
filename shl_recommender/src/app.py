@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
-from engine import RecommendationEngine
+from .engine import RecommendationEngine
 
 app = FastAPI(title="SHL Assessment Recommender")
 

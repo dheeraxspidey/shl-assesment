@@ -29,7 +29,7 @@ class RecommendationEngine:
         # Check if indices exist, if not rebuild
         if not os.path.exists(INDEX_FILE) or not os.path.exists(METADATA_FILE):
             print("Indices not found. Rebuilding from raw data...")
-            from ingest import ingest_data
+            from .ingest import ingest_data
             ingest_data()
             
         self.index = faiss.read_index(INDEX_FILE)
