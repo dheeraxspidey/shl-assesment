@@ -31,6 +31,10 @@ def scrape_url(url: str) -> str:
 def health_check():
     return {"status": "healthy"}
 
+@app.get("/")
+def root():
+    return {"message": "SHL Assessment Recommender API is running. Go to /docs for Swagger UI."}
+
 @app.post("/recommend")
 def recommend(request: RecommendRequest):
     query_text = request.query

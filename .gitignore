@@ -39,3 +39,8 @@ ENV/
 # Large Data Files (Generated on startup)
 shl_recommender/data/*.index
 shl_recommender/data/*.pkl
+
+# Local Documentation (Fluff)
+project_report.txt
+submission_document.txt
+deployment_guide.md
