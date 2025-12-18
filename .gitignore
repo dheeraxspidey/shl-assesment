@@ -44,3 +44,9 @@ shl_recommender/data/*.pkl
 project_report.txt
 submission_document.txt
 deployment_guide.md
+
+# Assignment Files & Scripts (Fluff)
+Gen_AI Dataset.xlsx
+SHL AI Intern RE Generative AI assignment.pdf
+assignment_text.txt
+push_to_hf.sh
